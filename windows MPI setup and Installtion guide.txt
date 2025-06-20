@@ -1,0 +1,360 @@
+# MPI-Based Distributed Matrix Multiplication - Windows Setup Guide
+
+## Table of Contents
+1. [Prerequisites](#prerequisites)
+2. [MPI Installation](#mpi-installation)
+3. [Python Environment Setup](#python-environment-setup)
+4. [Project Installation](#project-installation)
+5. [Running the Project](#running-the-project)
+6. [Troubleshooting](#troubleshooting)
+
+## Prerequisites
+
+### System Requirements
+- Windows 10/11 (64-bit)
+- At least 4GB RAM (8GB+ recommended)
+- Python 3.8 or higher
+- Administrative privileges for installation
+
+### Required Software
+- Microsoft Visual Studio Build Tools or Visual Studio Community
+- Microsoft MPI (MS-MPI)
+- Python with pip
+
+## MPI Installation
+
+### Step 1: Install Microsoft MPI (MS-MPI)
+
+1. **Download MS-MPI**
+   ```
+   Visit: https://docs.microsoft.com/en-us/message-passing-interface/microsoft-mpi
+   Download both:
+   - msmpisetup.exe (MS-MPI Redistributable Package)
+   - msmpisdk.msi (MS-MPI SDK)
+   ```
+
+2. **Install MS-MPI**
+   - Run `msmpisetup.exe` as Administrator
+   - Accept license agreement and install with default settings
+   - Run `msmpisdk.msi` as Administrator
+   - Install SDK with default settings
+
+3. **Verify Installation**
+   ```cmd
+   # Open Command Prompt and run:
+   mpiexec -help
+   
+   # You should see MPI help information
+   ```
+
+4. **Set Environment Variables**
+   ```cmd
+   # Add to PATH (usually done automatically):
+   C:\Program Files\Microsoft MPI\Bin\
+   
+   # Set MSMPI_BIN (if not set automatically):
+   set MSMPI_BIN=C:\Program Files\Microsoft MPI\Bin\
+   ```
+
+### Step 2: Install Visual Studio Build Tools
+
+1. **Download Visual Studio Build Tools**
+   ```
+   Visit: https://visualstudio.microsoft.com/downloads/
+   Download: Build Tools for Visual Studio 2022 (free)
+   ```
+
+2. **Install Required Components**
+   - C++ build tools
+   - Windows 10/11 SDK (latest version)
+   - MSVC v143 - VS 2022 C++ x64/x86 build tools
+
+## Python Environment Setup
+
+### Step 1: Create Virtual Environment
+
+```cmd
+# Create project directory
+mkdir mpi_matrix_project
+cd mpi_matrix_project
+
+# Create virtual environment
+python -m venv mpi_env
+
+# Activate virtual environment
+mpi_env\Scripts\activate
+```
+
+### Step 2: Install Required Python Packages
+
+```cmd
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install required packages
+pip install numpy
+pip install matplotlib
+pip install pandas
+pip install seaborn
+pip install mpi4py
+
+# If mpi4py installation fails, try:
+pip install --no-cache-dir mpi4py
+```
+
+### Step 3: Verify mpi4py Installation
+
+```python
+# Create test file: test_mpi.py
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+print(f"Hello from process {rank} of {size}")
+```
+
+```cmd
+# Test with single process
+python test_mpi.py
+
+# Test with multiple processes
+mpiexec -n 4 python test_mpi.py
+```
+
+## Project Installation
+
+### Step 1: Download Project Files
+
+Create the following files in your project directory:
+
+1. `distributed_matrix_mult.py` - Main implementation
+2. `performance_analyzer.py` - Performance analysis tool
+3. `requirements.txt` - Python dependencies
+
+### Step 2: Create Requirements File
+
+```txt
+# requirements.txt
+numpy>=1.21.0
+matplotlib>=3.5.0
+pandas>=1.3.0
+seaborn>=0.11.0
+mpi4py>=3.1.0
+```
+
+### Step 3: Install Dependencies
+
+```cmd
+pip install -r requirements.txt
+```
+
+## Running the Project
+
+### Basic Usage
+
+1. **Single Test Run**
+   ```cmd
+   # Run with 4 processes, 200x200 matrices
+   mpiexec -n 4 python distributed_matrix_mult.py --size 200
+   ```
+
+2. **Benchmark Mode**
+   ```cmd
+   # Run comprehensive benchmark with 4 processes
+   mpiexec -n 4 python distributed_matrix_mult.py --benchmark --runs 3
+   ```
+
+3. **Different Process Counts**
+   ```cmd
+   # Test with different numbers of processes
+   mpiexec -n 2 python distributed_matrix_mult.py --benchmark
+   mpiexec -n 4 python distributed_matrix_mult.py --benchmark
+   mpiexec -n 8 python distributed_matrix_mult.py --benchmark
+   ```
+
+### Performance Analysis
+
+1. **Analyze Results**
+   ```python
+   # Run performance analyzer
+   python performance_analyzer.py
+   
+   # Or use programmatically:
+   from performance_analyzer import PerformanceAnalyzer
+   analyzer = PerformanceAnalyzer()
+   analyzer.load_results('mpi_results_4proc_20241220_143022.json')
+   ```
+
+### Advanced Usage Examples
+
+1. **Custom Matrix Sizes**
+   ```cmd
+   # Test specific matrix size
+   mpiexec -n 6 python distributed_matrix_mult.py --size 500
+   ```
+
+2. **Multiple Benchmark Runs**
+   ```cmd
+   # Run 5 iterations for better accuracy
+   mpiexec -n 4 python distributed_matrix_mult.py --benchmark --runs 5
+   ```
+
+3. **Scalability Testing Script**
+   ```cmd
+   # Create batch file: run_scalability_test.bat
+   @echo off
+   echo Running scalability tests...
+   
+   for %%i in (1,2,4,8) do (
+       echo Testing with %%i processes...
+       mpiexec -n %%i python distributed_matrix_mult.py --benchmark --runs 3
+   )
+   
+   echo Scalability tests completed!
+   ```
+
+## Expected Output
+
+### Successful Run Example
+```
+Testing 200x200 × 200x200 matrix multiplication with 4 processes
+✓ Verification passed for 200x200 × 200x200
+Benchmarking with 4 processes...
+Matrix Size | Serial Time | Distributed Time | Speedup | Efficiency
+----------------------------------------------------------------------
+ 50x 50x 50 |     0.0045s |          0.0023s |    1.96 |      0.49
+100x100x100 |     0.0342s |          0.0156s |    2.19 |      0.55
+200x200x200 |     0.2734s |          0.0891s |    3.07 |      0.77
+300x300x300 |     0.9234s |          0.2847s |    3.24 |      0.81
+400x400x400 |     2.1876s |          0.6234s |    3.51 |      0.88
+
+Benchmark completed!
+Results saved with 4 processes
+Performance plots saved to performance_analysis_20241220_143022.png
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+1. **mpi4py Installation Fails**
+   ```cmd
+   # Solution 1: Install pre-compiled version
+   pip install --only-binary=all mpi4py
+   
+   # Solution 2: Use conda instead
+   conda install -c conda-forge mpi4py
+   
+   # Solution 3: Set compiler flags
+   set MPICC=mpicc
+   pip install mpi4py
+   ```
+
+2. **"mpiexec not found" Error**
+   ```cmd
+   # Add MS-MPI to PATH
+   set PATH=%PATH%;C:\Program Files\Microsoft MPI\Bin\
+   
+   # Or use full path
+   "C:\Program Files\Microsoft MPI\Bin\mpiexec.exe" -n 4 python script.py
+   ```
+
+3. **Permission Denied Errors**
+   ```cmd
+   # Run Command Prompt as Administrator
+   # Or check antivirus software blocking execution
+   ```
+
+4. **Import Error: No module named 'mpi4py'**
+   ```cmd
+   # Ensure virtual environment is activated
+   mpi_env\Scripts\activate
+   
+   # Reinstall mpi4py
+   pip uninstall mpi4py
+   pip install mpi4py
+   ```
+
+5. **Process Spawn Failures**
+   ```cmd
+   # Try with localhost specification
+   mpiexec -n 4 -host localhost python script.py
+   
+   # Or disable process binding
+   mpiexec -n 4 -bind-to none python script.py
+   ```
+
+6. **Performance Issues**
+   - Ensure no other heavy processes are running
+   - Try different numbers of processes (1, 2, 4, 8)
+   - Monitor CPU and memory usage
+   - Consider matrix size vs. available memory
+
+### Debug Mode
+
+Enable debug output:
+```cmd
+# Set debug environment variables
+set MPIEXEC_VERBOSE=1
+set MSMPI_VERBOSE=1
+
+# Run with debug output
+mpiexec -n 4 python distributed_matrix_mult.py --size 100
+```
+
+### System Information Check
+
+```cmd
+# Check system information
+systeminfo | findstr /C:"Total Physical Memory"
+echo Number of processors: %NUMBER_OF_PROCESSORS%
+
+# Check MPI installation
+mpiexec -help
+where mpiexec
+```
+
+## Performance Optimization Tips
+
+1. **Process Count Selection**
+   - Start with number of CPU cores
+   - Test 1, 2, 4, 8 processes
+   - More processes ≠ better performance
+
+2. **Matrix Size Considerations**
+   - Small matrices: communication overhead dominates
+   - Large matrices: better parallel efficiency
+   - Consider memory constraints
+
+3. **System Optimization**
+   - Close unnecessary applications
+   - Disable Windows Defender real-time scanning temporarily
+   - Use Task Manager to monitor resource usage
+
+4. **Benchmarking Best Practices**
+   - Run multiple iterations
+   - Use consistent system state
+   - Monitor system temperature
+   - Record system specifications
+
+## Next Steps
+
+1. Run the basic test to verify installation
+2. Execute benchmark tests with different process counts
+3. Analyze results using the performance analyzer
+4. Experiment with different matrix sizes
+5. Document your findings and system specifications
+
+## Support
+
+If you encounter issues:
+1. Check Windows Event Viewer for system errors
+2. Verify all software versions match requirements
+3. Test with smaller matrix sizes first
+4. Try running with single process to isolate MPI issues
+
+---
+
+**Note**: This setup guide is specifically for Windows systems. For Linux or macOS, different MPI implementations (OpenMPI, MPICH) and installation procedures apply.
