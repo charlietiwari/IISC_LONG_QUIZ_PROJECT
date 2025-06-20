@@ -158,8 +158,3 @@ def distributed_matrix_multiply(self, A, B):
 - **Weak Scaling**: Problem size scales with processes
 - **Efficiency Degradation**: Typically decreases with more processes
 
-## File Structure
-
-```
-mpi_matrix_project/
-├── distributed_matrix_mult.py
